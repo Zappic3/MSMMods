@@ -164,6 +164,7 @@ function FlipCardEntry:onTick(dt)
 
   -- apply color (first calculated in HSV for brighter colors)
   if self.isFlipped then
+    -- update tick function from the imported 'MenuColorTransition' library
     self:tickColourTransition(dt)
   else
     -- apply random color
