@@ -1,0 +1,18 @@
+{
+  "id": "gb-???",
+  "name": "Colorful Memory Minigame Helper",
+  "author": "Zappic",
+  "version": "1.0.0",
+  "game_version": "",
+  "native_entry": "",
+  "enabled": true,
+  "error_on_game_update": true,
+  "load_priority": 0,
+  "schema_version": 1,
+  "dependencies": [],
+  "assets": {
+    "auto_override": true,
+    "overrides": {},
+    "dat_overrides": {}
+  }
+}
