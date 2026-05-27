@@ -154,9 +154,6 @@ function FlipCardEntry:onTick(dt)
       timer = 0
     end
     local newGrey = 0.6 + timer / 0.2 * 0.4
-    --self.cSprite:V("red"):SetFloat(newGrey)
-    --self.cSprite:V("green"):SetFloat(newGrey)
-    --self.cSprite:V("blue"):SetFloat(newGrey)
     self:setScale(lua_sys.Vector2(scaleFactor + timer / 0.2 * scaleFactor * 0.1, scaleFactor + timer / 0.2 * scaleFactor * 0.1))
   end
   self.matchTimerDown = timer
