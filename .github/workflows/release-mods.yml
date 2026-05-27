@@ -84,12 +84,12 @@ jobs:
           git commit -m "chore: bump ${{ matrix.mod }} to v${{ steps.version.outputs.new_version }} [skip ci]"
           git push
 
-      - name: Zip mod (excluding version.txt)
+      - name: Zip mod
         if: steps.check.outputs.skip == 'false'
         run: |
           SAFE_NAME=$(echo "${{ matrix.mod }}" | tr ' ' '_')
           ZIP_NAME="${SAFE_NAME}-v${{ steps.version.outputs.new_version }}.zip"
-          zip -r "$ZIP_NAME" "${{ matrix.mod }}/" --exclude "${{ matrix.mod }}/version.txt"
+          cd "${{ matrix.mod }}" && zip -r "../$ZIP_NAME" . && cd ..
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
           echo "SAFE_NAME=$SAFE_NAME" >> $GITHUB_ENV
 
@@ -111,6 +111,7 @@ jobs:
 
   update-latest-release:
     needs: [detect-changes, release-mod]
+    if: needs.detect-changes.outputs.mods != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
