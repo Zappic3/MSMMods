@@ -52,14 +52,27 @@ jobs:
         if: steps.check.outputs.skip == 'false'
         id: version
         run: |
-          VERSION_FILE="${{ matrix.mod }}/version.txt"
-          if [ -f "$VERSION_FILE" ]; then
-            VERSION=$(cat "$VERSION_FILE")
-          else
-            VERSION="1.0.0"
+          MANIFEST="${{ matrix.mod }}/manifest.json"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "No manifest.json found in ${{ matrix.mod }}, skipping."
+            exit 1
           fi
-          NEW_VERSION=$(echo "$VERSION" | awk -F. '{$NF=$NF+1; OFS="."; print}')
-          echo "$NEW_VERSION" > "$VERSION_FILE"
+
+          VERSION=$(jq -r '.version' "$MANIFEST")
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          if echo "$COMMIT_MSG" | grep -q '\[major\]'; then
+            NEW_VERSION="$((MAJOR + 1)).0.0"
+          elif echo "$COMMIT_MSG" | grep -q '\[minor\]'; then
+            NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          else
+            NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+
+          jq --arg v "$NEW_VERSION" '.version = $v' "$MANIFEST" > tmp.json && mv tmp.json "$MANIFEST"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Commit version bump
@@ -67,23 +80,25 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${{ matrix.mod }}/version.txt"
+          git add "${{ matrix.mod }}/manifest.json"
           git commit -m "chore: bump ${{ matrix.mod }} to v${{ steps.version.outputs.new_version }} [skip ci]"
           git push
 
       - name: Zip mod (excluding version.txt)
         if: steps.check.outputs.skip == 'false'
         run: |
-          ZIP_NAME="${{ matrix.mod }}-v${{ steps.version.outputs.new_version }}.zip"
+          SAFE_NAME=$(echo "${{ matrix.mod }}" | tr ' ' '_')
+          ZIP_NAME="${SAFE_NAME}-v${{ steps.version.outputs.new_version }}.zip"
           zip -r "$ZIP_NAME" "${{ matrix.mod }}/" --exclude "${{ matrix.mod }}/version.txt"
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          echo "SAFE_NAME=$SAFE_NAME" >> $GITHUB_ENV
 
       - name: Create per-mod release
         if: steps.check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ matrix.mod }}-v${{ steps.version.outputs.new_version }}" "$ZIP_NAME" \
+          gh release create "${SAFE_NAME}-v${{ steps.version.outputs.new_version }}" "$ZIP_NAME" \
             --title "${{ matrix.mod }} v${{ steps.version.outputs.new_version }}" \
             --notes "Release for ${{ matrix.mod }} version ${{ steps.version.outputs.new_version }}"
 
@@ -91,7 +106,7 @@ jobs:
         if: steps.check.outputs.skip == 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.mod }}
+          name: ${{ env.SAFE_NAME }}
           path: ${{ env.ZIP_NAME }}
 
   update-latest-release:
