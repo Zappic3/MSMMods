@@ -22,9 +22,9 @@ jobs:
             | grep '/' \
             | cut -d'/' -f1 \
             | sort -u \
-            | grep -v '^\.')
+            | grep -v '^\.' || true)
           echo "Changed folders: $CHANGED"
-          JSON=$(echo "$CHANGED" | grep -v '^$' | jq -R . | jq -sc .)
+          JSON=$(echo "$CHANGED" | grep -v '^$' | jq -R . | jq -sc . || echo '[]')
           echo "mods=$JSON" >> $GITHUB_OUTPUT
 
   release-mod:
