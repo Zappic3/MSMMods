@@ -103,7 +103,7 @@ function FlipCardEntry:onInit()
   self.cTouch.onTouchUp = CFlipCardTouch.handleTouch
   self:InitCardOffsetTransition()
   self.isFlipped = false
-  -- prepare fade to normal
+  -- prepare fade to normal (no color tinting)
   self:InitColourTransition(1.5, 1, 1)
 end
 
