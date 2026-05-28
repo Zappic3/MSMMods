@@ -137,18 +137,14 @@ jobs:
       - name: Merge zips (new ones overwrite old ones)
         run: |
           mkdir -p final-zips/
-          # Start with existing zips from the old latest release.
-          # Each zip is named ModName-vX.Y.Z.zip; strip the version to get the mod name
-          # so newer versions replace older ones.
           for f in existing-zips/*.zip; do
             [ -f "$f" ] || continue
-            MOD_NAME=$(basename "$f" | sed 's/-v[0-9].*//')
+            MOD_NAME=$(basename "$f" .zip | sed 's/-v[0-9].*//')
             cp "$f" "final-zips/${MOD_NAME}.zip"
           done
-          # Overwrite with the freshly built zips (these are the updated mods)
           for f in new-zips/*.zip; do
             [ -f "$f" ] || continue
-            MOD_NAME=$(basename "$f" | sed 's/-v[0-9].*//')
+            MOD_NAME=$(basename "$f" .zip | sed 's/-v[0-9].*//')
             cp "$f" "final-zips/${MOD_NAME}.zip"
           done
 
